@@ -1,6 +1,6 @@
 # GitChess ♟️ Git-Driven Chess Engine
 
-[![GitChess CI](https://github.com/your-username/git-chess/actions/workflows/git-chess-ci.yml/badge.svg)](https://github.com/your-username/git-chess/actions)
+[![GitChess CI](https://github.com/004Ongoro/git-chess/actions/workflows/git-chess-ci.yml/badge.svg)](https://github.com/004Ongoro/git-chess/actions)
 
 **GitChess** is a complete, fully featured chess game where every chess move is performed directly through Git commits and operations. The Git repository **is** the game board and the full game history.
 
@@ -38,7 +38,7 @@ White to move
 ### 2. Installation
 Clone the repository and install the package locally:
 ```bash
-git clone https://github.com/your-username/git-chess.git
+git clone https://github.com/004Ongoro/git-chess.git
 cd git-chess
 pip install -e .
 ```
