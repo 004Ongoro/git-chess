@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-# Update board visual in README after commit completes
+# Update board visual in README and board.svg after commit completes
 if command -v git-chess >/dev/null 2>&1; then
     git-chess update-readme
 else
     python3 -m git_chess.cli update-readme
 fi
 
-# Amend commit to include updated README if changed
-if git status --porcelain | grep -q "README.md"; then
-    git add README.md
+# Amend commit to include updated README.md and board.svg if changed
+if git status --porcelain | grep -qE "README.md|board.svg"; then
+    git add README.md board.svg
     git commit --amend --no-edit --no-verify >/dev/null 2>&1 || true
 fi

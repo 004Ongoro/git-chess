@@ -1,0 +1,35 @@
+name: GitChess AI Opponent
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  ai-respond:
+    # Only run if commit message starts with 'move:' and not made by GitHub Action bot
+    if: "contains(github.event.head_commit.message, 'move:') && !contains(github.event.head_commit.message, '[AI]') && !contains(github.actor, 'github-actions')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install GitChess
+        run: pip install -e .
+
+      - name: Generate AI Countermove
+        run: |
+          git config --global user.name "GitChess Bot"
+          git config --global user.email "bot@gitchess.local"
+          git-chess init
+          git-chess ai-move --depth 3
+
+      - name: Push AI move
+        run: |
+          git push origin HEAD:${{ github.ref }}

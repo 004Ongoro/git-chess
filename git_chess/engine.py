@@ -3,6 +3,12 @@ from typing import Tuple, List, Optional
 import chess
 from git_chess.utils import get_board_fen_path
 
+UNICODE_PIECES = {
+    'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙',
+    'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+    '.': '·'
+}
+
 class GitChessEngine:
     """Manages chess board state, move validation, and FEN persistence."""
 
@@ -86,9 +92,33 @@ class GitChessEngine:
         """Returns ASCII representation of current board."""
         return str(self.board)
 
+    def render_unicode(self) -> str:
+        """Returns Unicode symbol representation of current board with ranks/files."""
+        lines = []
+        lines.append("  a b c d e f g h")
+        for rank in range(7, -1, -1):
+            row = [str(rank + 1)]
+            for file in range(8):
+                square = chess.square(file, rank)
+                piece = self.board.piece_at(square)
+                symbol = UNICODE_PIECES.get(piece.symbol(), '·') if piece else '·'
+                row.append(symbol)
+            row.append(str(rank + 1))
+            lines.append(" ".join(row))
+        lines.append("  a b c d e f g h")
+        return "\n".join(lines)
+
     def update_readme(self) -> None:
-        """Updates board block in README.md with current board visualization."""
-        readme_path = self.fen_path.parent / "README.md"
+        """Updates board block and board.svg in repo."""
+        repo_root = self.fen_path.parent
+        svg_path = repo_root / "board.svg"
+        readme_path = repo_root / "README.md"
+
+        # Generate SVG board
+        from git_chess.visualization import generate_board_svg
+        svg_content = generate_board_svg(self.board)
+        svg_path.write_text(svg_content)
+
         if not readme_path.exists():
             return
 
@@ -99,7 +129,12 @@ class GitChessEngine:
         if start_marker in content and end_marker in content:
             pre = content.split(start_marker)[0]
             post = content.split(end_marker)[1]
-            board_str = self.render_ascii()
+            board_str = self.render_unicode()
             turn_str = "White to move" if self.board.turn == chess.WHITE else "Black to move"
-            new_block = f"{start_marker}\n```\n{board_str}\n\n{turn_str}\n```\n{end_marker}"
+            new_block = (
+                f"{start_marker}\n"
+                f"![GitChess Board](board.svg)\n\n"
+                f"```\n{board_str}\n\n{turn_str}\n```\n"
+                f"{end_marker}"
+            )
             readme_path.write_text(pre + new_block + post)

@@ -2,6 +2,7 @@ import sys
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 import click
 import chess
 from rich.console import Console
@@ -30,15 +31,39 @@ def status():
 
 @cli.command()
 @click.argument("move_str")
-def move(move_str: str):
-    """Attempt a chess move in UCI (e2e4) or SAN (e4) format."""
+@click.option("--vs-ai", is_flag=True, help="Automatically trigger AI countermove after your move.")
+def move(move_str: str, vs_ai: bool):
+    """Make a move via Git commit (executes git commit -m 'move: <MOVE>')."""
+    commit_msg = f"move: {move_str}"
+    res = subprocess.run(["git", "commit", "--allow-empty", "-m", commit_msg], check=False)
+    if res.returncode != 0:
+        sys.exit(1)
+
+    if vs_ai:
+        engine = GitChessEngine()
+        if not engine.board.is_game_over():
+            from git_chess.ai import get_best_move
+            ai_move_obj = get_best_move(engine.board, depth=2)
+            ai_san = engine.board.san(ai_move_obj)
+            console.print(f"[bold cyan]AI calculating countermove... playing {ai_san}[/bold cyan]")
+            subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {ai_san} [AI]"], check=False)
+
+@cli.command()
+@click.option("--depth", default=2, type=int, help="Search depth for AI engine")
+def ai_move(depth: int):
+    """Calculate and commit AI move for current turn."""
     engine = GitChessEngine()
-    success, message = engine.apply_move(move_str)
-    if success:
-        engine.update_readme()
-        console.print(f"[bold green]{message}[/bold green]")
-    else:
-        console.print(f"[bold red]{message}[/bold red]")
+    if engine.board.is_game_over():
+        console.print("[yellow]Game is already over.[/yellow]")
+        return
+
+    from git_chess.ai import get_best_move
+    move_obj = get_best_move(engine.board, depth=depth)
+    san_move = engine.board.san(move_obj)
+    
+    console.print(f"[bold cyan]AI playing move: {san_move}[/bold cyan]")
+    res = subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {san_move} [AI]"], check=False)
+    if res.returncode != 0:
         sys.exit(1)
 
 @cli.command()
@@ -51,11 +76,41 @@ def reset():
 
 @cli.command()
 def moves():
-    """List available legal moves."""
+    """List available legal moves in a styled table."""
     engine = GitChessEngine()
-    legal_moves = engine.get_legal_moves()
-    console.print(f"[bold cyan]Legal Moves ({len(legal_moves)}):[/bold cyan]")
-    console.print(", ".join(legal_moves))
+    legal_moves = list(engine.board.legal_moves)
+    
+    table = Table(title=f"Legal Moves ({len(legal_moves)})", show_header=True, header_style="bold magenta")
+    table.add_column("SAN", style="cyan")
+    table.add_column("UCI", style="green")
+    table.add_column("Piece", style="yellow")
+
+    for m in legal_moves:
+        san = engine.board.san(m)
+        uci = m.uci()
+        piece = engine.board.piece_at(m.from_square)
+        piece_name = piece.symbol() if piece else ""
+        table.add_row(san, uci, piece_name)
+
+    console.print(table)
+
+@cli.command(name="log")
+def show_log():
+    """Display game move history from Git commit log."""
+    res = subprocess.run(
+        ["git", "log", "--grep=^move:", "--pretty=format:%h %an: %s"],
+        capture_output=True,
+        text=True,
+        check=False
+    )
+    if not res.stdout.strip():
+        console.print("[yellow]No moves recorded in Git commit history yet.[/yellow]")
+        return
+        
+    console.print("[bold green]GitChess Move History[/bold green]")
+    lines = res.stdout.strip().splitlines()
+    for idx, line in enumerate(reversed(lines), 1):
+        console.print(f"{idx}. {line}")
 
 @cli.command()
 @click.argument("msg_file", type=click.Path(exists=True))
@@ -70,6 +125,9 @@ def validate_commit_msg(msg_file: str):
         candidate = candidate[5:].strip()
     elif candidate.lower().startswith("move "):
         candidate = candidate[5:].strip()
+
+    if "[" in candidate:
+        candidate = candidate.split("[")[0].strip()
 
     engine = GitChessEngine()
     
@@ -97,8 +155,41 @@ def validate_commit_msg(msg_file: str):
         sys.exit(1)
 
 @cli.command()
+@click.option("--fmt", default="svg", type=click.Choice(["svg", "html"]), help="Export format (svg or html)")
+@click.option("--output", default=None, help="Output file path")
+def export(fmt: str, output: Optional[str]):
+    """Export current board state as SVG image or standalone HTML page."""
+    engine = GitChessEngine()
+    repo_root = get_repo_root()
+    
+    if fmt == "svg":
+        from git_chess.visualization import generate_board_svg
+        data = generate_board_svg(engine.board)
+        out_path = Path(output) if output else repo_root / "board.svg"
+    else:
+        from git_chess.visualization import generate_board_html
+        data = generate_board_html(engine.board)
+        out_path = Path(output) if output else repo_root / "board.html"
+
+    out_path.write_text(data)
+    console.print(f"[bold green]Exported board to {out_path}[/bold green]")
+
+@cli.command()
+def view():
+    """Open board HTML viewer in default browser."""
+    import webbrowser
+    engine = GitChessEngine()
+    repo_root = get_repo_root()
+    from git_chess.visualization import generate_board_html
+    
+    html_path = repo_root / "board.html"
+    html_path.write_text(generate_board_html(engine.board))
+    webbrowser.open(f"file://{html_path.resolve()}")
+    console.print(f"[bold green]Opened viewer at {html_path.resolve()}[/bold green]")
+
+@cli.command()
 def update_readme():
-    """Update README board visualization."""
+    """Update README board visualization and board.svg."""
     engine = GitChessEngine()
     engine.update_readme()
 
