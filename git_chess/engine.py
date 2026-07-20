@@ -18,6 +18,8 @@ class GitChessEngine:
         self.fen_path = fen_path or get_board_fen_path()
         self.board = chess.Board()
         self.load_state()
+        if self.fen_path == get_board_fen_path():
+            self.save_state()
 
     def load_state(self) -> chess.Board:
         """Reconstructs board state by replaying valid move commits from Git history."""
