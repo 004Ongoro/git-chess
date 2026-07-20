@@ -3,8 +3,16 @@ from typing import Optional
 import chess
 import chess.svg
 
-def generate_board_svg(board: chess.Board, last_move: Optional[chess.Move] = None) -> str:
-    """Generates styled SVG board string with move highlights."""
+BOARD_THEMES = {
+    "classic": {"square light": "#ffce9e", "square dark": "#d18b47"},
+    "wood": {"square light": "#f0d9b5", "square dark": "#b58863"},
+    "dark": {"square light": "#9e9e9e", "square dark": "#424242"},
+    "neon": {"square light": "#80deea", "square dark": "#00838f"},
+    "icy": {"square light": "#e0f7fa", "square dark": "#80deea"},
+}
+
+def generate_board_svg(board: chess.Board, last_move: Optional[chess.Move] = None, theme: str = "classic") -> str:
+    """Generates styled SVG board string with move highlights and theme colors."""
     fill = {}
     if board.move_stack:
         last = board.peek()
@@ -20,18 +28,21 @@ def generate_board_svg(board: chess.Board, last_move: Optional[chess.Move] = Non
         last = board.peek()
         arrows = [chess.svg.Arrow(last.from_square, last.to_square, color="#1e88e5")]
 
+    colors = BOARD_THEMES.get(theme.lower(), BOARD_THEMES["classic"])
+
     svg_data = chess.svg.board(
         board=board,
         fill=fill,
         arrows=arrows,
+        colors=colors,
         size=400,
         coordinates=True
     )
     return svg_data
 
-def generate_board_html(board: chess.Board) -> str:
+def generate_board_html(board: chess.Board, theme: str = "classic") -> str:
     """Generates standalone HTML page showcasing current board SVG."""
-    svg_content = generate_board_svg(board)
+    svg_content = generate_board_svg(board, theme=theme)
     side = "White" if board.turn == chess.WHITE else "Black"
     return f"""<!DOCTYPE html>
 <html lang="en">

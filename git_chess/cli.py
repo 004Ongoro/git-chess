@@ -215,23 +215,24 @@ def validate_commit_msg(msg_file: str):
 
 @cli.command()
 @click.option("--fmt", default="svg", type=click.Choice(["svg", "html"]), help="Export format (svg or html)")
+@click.option("--theme", default="classic", type=click.Choice(["classic", "wood", "dark", "neon", "icy"]), help="Board color theme")
 @click.option("--output", default=None, help="Output file path")
-def export(fmt: str, output: Optional[str]):
+def export(fmt: str, theme: str, output: Optional[str]):
     """Export current board state as SVG image or standalone HTML page."""
     engine = GitChessEngine()
     repo_root = get_repo_root()
     
     if fmt == "svg":
         from git_chess.visualization import generate_board_svg
-        data = generate_board_svg(engine.board)
+        data = generate_board_svg(engine.board, theme=theme)
         out_path = Path(output) if output else repo_root / "board.svg"
     else:
         from git_chess.visualization import generate_board_html
-        data = generate_board_html(engine.board)
+        data = generate_board_html(engine.board, theme=theme)
         out_path = Path(output) if output else repo_root / "board.html"
 
     out_path.write_text(data)
-    console.print(f"[bold green]Exported board to {out_path}[/bold green]")
+    console.print(f"[bold green]Exported board ({theme} theme) to {out_path}[/bold green]")
 
 @cli.command()
 def view():

@@ -9,7 +9,7 @@ Thank you for your interest in contributing to **GitChess**! We welcome contribu
 ### 1. Fork and Clone
 Fork the repository on GitHub and clone your fork locally:
 ```bash
-git clone https://github.com/YOUR-USERNAME/git-chess.git
+git clone https://github.com/004Ongoro/git-chess.git
 cd git-chess
 ```
 
