@@ -9,9 +9,9 @@ Welcome to **GitChess**, a chess game where every chess move is performed throug
 
 ```
   a b c d e f g h
-8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ 8
+8 ♜ ♞ ♝ ♛ ♚ ♝ · ♜ 8
 7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟ 7
-6 · · · · · · · · 6
+6 · · · · · · · ♞ 6
 5 · · · · ♙ · · · 5
 4 · · · · · · · · 4
 3 · · · · · ♘ · · 3
@@ -19,7 +19,7 @@ Welcome to **GitChess**, a chess game where every chess move is performed throug
 1 ♖ ♘ ♗ ♕ ♔ ♗ · ♖ 1
   a b c d e f g h
 
-Black to move
+White to move
 ```
 <!-- BOARD_END -->
 
