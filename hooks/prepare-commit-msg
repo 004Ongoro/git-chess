@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Prepares commit message template if empty
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+if [ -z "$COMMIT_SOURCE" ]; then
+    # Interactive commit without template
+    :
+fi

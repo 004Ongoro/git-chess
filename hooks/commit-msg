@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+# Delegate commit message validation to git-chess CLI
+if command -v git-chess >/dev/null 2>&1; then
+    exec git-chess validate-commit-msg "$1"
+else
+    exec python3 -m git_chess.cli validate-commit-msg "$1"
+fi

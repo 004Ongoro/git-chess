@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "git-chess"
+version = "0.1.0"
+description = "A complete chess game where every chess move is performed through Git operations."
+authors = [{ name = "GitChess Team" }]
+dependencies = [
+    "chess>=1.10.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+git-chess = "git_chess.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["git_chess*"]
+
