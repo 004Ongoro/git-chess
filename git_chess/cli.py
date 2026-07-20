@@ -34,7 +34,8 @@ def status():
 @cli.command()
 @click.argument("move_str")
 @click.option("--vs-ai", is_flag=True, help="Automatically trigger AI countermove after your move.")
-def move(move_str: str, vs_ai: bool):
+@click.option("--engine", default="minimax", type=click.Choice(["minimax", "stockfish", "auto"]), help="AI engine choice")
+def move(move_str: str, vs_ai: bool, engine: str):
     """Make a move via Git commit (executes git commit -m 'move: <MOVE>')."""
     commit_msg = f"move: {move_str}"
     res = subprocess.run(["git", "commit", "--allow-empty", "-m", commit_msg], check=False)
@@ -42,26 +43,27 @@ def move(move_str: str, vs_ai: bool):
         sys.exit(1)
 
     if vs_ai:
-        engine = GitChessEngine()
-        if not engine.board.is_game_over():
+        engine_obj = GitChessEngine()
+        if not engine_obj.board.is_game_over():
             from git_chess.ai import get_best_move
-            ai_move_obj = get_best_move(engine.board, depth=2)
-            ai_san = engine.board.san(ai_move_obj)
+            ai_move_obj = get_best_move(engine_obj.board, depth=2, engine_type=engine)
+            ai_san = engine_obj.board.san(ai_move_obj)
             console.print(f"[bold cyan]AI calculating countermove... playing {ai_san}[/bold cyan]")
             subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {ai_san} [AI]"], check=False)
 
 @cli.command()
 @click.option("--depth", default=2, type=int, help="Search depth for AI engine")
-def ai_move(depth: int):
+@click.option("--engine", default="minimax", type=click.Choice(["minimax", "stockfish", "auto"]), help="AI engine choice")
+def ai_move(depth: int, engine: str):
     """Calculate and commit AI move for current turn."""
-    engine = GitChessEngine()
-    if engine.board.is_game_over():
+    engine_obj = GitChessEngine()
+    if engine_obj.board.is_game_over():
         console.print("[yellow]Game is already over.[/yellow]")
         return
 
     from git_chess.ai import get_best_move
-    move_obj = get_best_move(engine.board, depth=depth)
-    san_move = engine.board.san(move_obj)
+    move_obj = get_best_move(engine_obj.board, depth=depth, engine_type=engine)
+    san_move = engine_obj.board.san(move_obj)
     
     console.print(f"[bold cyan]AI playing move: {san_move}[/bold cyan]")
     res = subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {san_move} [AI]"], check=False)

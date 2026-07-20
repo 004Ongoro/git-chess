@@ -14,6 +14,13 @@ def test_ai_best_move_returns_legal_move():
     move = get_best_move(board, depth=1)
     assert move in board.legal_moves
 
+def test_ai_engine_types():
+    board = chess.Board()
+    move_minimax = get_best_move(board, depth=1, engine_type="minimax")
+    assert move_minimax in board.legal_moves
+    move_auto = get_best_move(board, depth=1, engine_type="auto")
+    assert move_auto in board.legal_moves
+
 def test_ai_finds_m1():
     # White can mate in 1: 1. Qh7# or 1. Qf7#
     board = chess.Board("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")

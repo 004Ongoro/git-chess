@@ -143,17 +143,20 @@ def minimax(board: chess.Board, depth: int, alpha: int, beta: int, maximizing: b
                 break
         return min_eval
 
-def get_best_move(board: chess.Board, depth: int = 3) -> chess.Move:
-    """Calculates best move using Minimax engine, falling back to Stockfish if available."""
-    stockfish_path = shutil.which("stockfish")
-    if stockfish_path:
-        try:
-            with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-                result = engine.play(board, chess.engine.Limit(time=0.5))
-                if result.move:
-                    return result.move
-        except Exception:
-            pass
+def get_best_move(board: chess.Board, depth: int = 3, engine_type: str = "minimax") -> chess.Move:
+    """Calculates best move using Minimax engine or Stockfish UCI engine if requested/available."""
+    if engine_type == "stockfish" or engine_type == "auto":
+        stockfish_path = shutil.which("stockfish")
+        if stockfish_path:
+            try:
+                with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+                    result = engine.play(board, chess.engine.Limit(depth=depth))
+                    if result.move:
+                        return result.move
+            except Exception:
+                pass
+        elif engine_type == "stockfish":
+            print("[Warning] Stockfish binary not found on PATH. Falling back to built-in Minimax AI.")
 
     # Built-in Minimax fallback
     legal_moves = list(board.legal_moves)
