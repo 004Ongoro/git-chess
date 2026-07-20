@@ -246,6 +246,29 @@ def view():
     webbrowser.open(f"file://{html_path.resolve()}")
     console.print(f"[bold green]Opened viewer at {html_path.resolve()}[/bold green]")
 
+@cli.command(name="export-pgn")
+@click.option("--output", default=None, help="Output PGN file path")
+def export_pgn_cmd(output: Optional[str]):
+    """Export current game history to standard PGN file."""
+    from git_chess.pgn import export_pgn_string
+    pgn_str = export_pgn_string()
+    
+    if output:
+        out_path = Path(output)
+        out_path.write_text(pgn_str)
+        console.print(f"[bold green]Exported game PGN to {out_path}[/bold green]")
+    else:
+        console.print("[bold cyan]GitChess PGN Export:[/bold cyan]\n")
+        console.print(pgn_str)
+
+@cli.command(name="import-pgn")
+@click.argument("pgn_file", type=click.Path(exists=True))
+def import_pgn_cmd(pgn_file: str):
+    """Import a PGN file and commit moves to Git repository."""
+    from git_chess.pgn import import_pgn_file
+    count = import_pgn_file(Path(pgn_file))
+    console.print(f"[bold green]Successfully imported {count} moves from PGN![/bold green]")
+
 @cli.command()
 def update_readme():
     """Update README board visualization and board.svg."""
