@@ -5,9 +5,9 @@ from git_chess.ai import get_best_move, evaluate_board
 
 def test_evaluation():
     board = chess.Board()
-    # Initial board position evaluation: 0 material difference + 20 legal moves * 5 mobility bonus = 100
+    # Initial board position evaluation: 0 material difference + 20 legal moves * 3 mobility bonus = 60
     score = evaluate_board(board)
-    assert score == 100
+    assert score == 60
 
 def test_ai_best_move_returns_legal_move():
     board = chess.Board()
