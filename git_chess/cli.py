@@ -102,6 +102,57 @@ def moves():
 
     console.print(table)
 
+@cli.command()
+@click.option("--vs-ai", is_flag=True, help="Play interactively against AI opponent")
+def play(vs_ai: bool):
+    """Interactive TUI to play chess move by move."""
+    engine = GitChessEngine()
+    
+    while not engine.board.is_game_over():
+        side = "White" if engine.board.turn == chess.WHITE else "Black"
+        console.print(f"\n[bold green]GitChess Interactive Mode[/bold green] | Active Turn: [bold cyan]{side}[/bold cyan]")
+        console.print(engine.render_unicode() + "\n")
+        
+        legal_moves = [engine.board.san(m) for m in engine.board.legal_moves]
+        if not legal_moves:
+            break
+
+        table = Table(title="Available Legal Moves", show_header=True, header_style="bold magenta")
+        table.add_column("#", style="dim")
+        table.add_column("SAN Move", style="cyan")
+
+        for idx, san in enumerate(legal_moves, 1):
+            table.add_row(str(idx), san)
+
+        console.print(table)
+        choice = click.prompt("Select move number (or type SAN move / 'q' to quit)", type=str)
+        
+        if choice.strip().lower() == "q":
+            console.print("[yellow]Exited interactive play.[/yellow]")
+            return
+
+        selected_move = ""
+        if choice.isdigit() and 1 <= int(choice) <= len(legal_moves):
+            selected_move = legal_moves[int(choice) - 1]
+        else:
+            selected_move = choice.strip()
+
+        res = subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {selected_move}"], check=False)
+        if res.returncode == 0:
+            if vs_ai:
+                engine = GitChessEngine()
+                if not engine.board.is_game_over():
+                    from git_chess.ai import get_best_move
+                    ai_move_obj = get_best_move(engine.board, depth=2)
+                    ai_san = engine.board.san(ai_move_obj)
+                    console.print(f"[bold cyan]AI calculating countermove... playing {ai_san}[/bold cyan]")
+                    subprocess.run(["git", "commit", "--allow-empty", "-m", f"move: {ai_san} [AI]"], check=False)
+            engine = GitChessEngine()
+        else:
+            console.print("[bold red]Invalid selection. Try again.[/bold red]")
+
+    console.print("[bold red]Game Over![/bold red]")
+
 @cli.command(name="log")
 def show_log():
     """Display game move history from Git commit log."""
