@@ -69,10 +69,14 @@ def ai_move(depth: int):
 @cli.command()
 def reset():
     """Reset board state to initial starting position."""
+    # Commit reset marker so history replay starts fresh from here
+    subprocess.run(["git", "commit", "--allow-empty", "--no-verify", "-m", "reset: game"], check=False)
     engine = GitChessEngine()
     engine.reset_state()
     engine.update_readme()
-    console.print("[bold green]Board reset to initial position.[/bold green]")
+    subprocess.run(["git", "add", "board.fen", "board.svg", "README.md"], check=False)
+    subprocess.run(["git", "commit", "--amend", "--no-edit", "--no-verify"], check=False)
+    console.print("[bold green]Board reset to initial position and committed.[/bold green]")
 
 @cli.command()
 def moves():

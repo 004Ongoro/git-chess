@@ -45,3 +45,8 @@ def test_fool_checkmate(tmp_path):
     assert success is True
     assert "[CHECKMATE]" in msg
     assert engine.board.is_checkmate() is True
+
+def test_git_log_replay_consistency():
+    engine = GitChessEngine()
+    fen_disk = engine.fen_path.read_text().strip()
+    assert engine.board.fen() == fen_disk

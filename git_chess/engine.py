@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Tuple, List, Optional
+import subprocess
 import chess
+import chess.pgn
 from git_chess.utils import get_board_fen_path
 
 UNICODE_PIECES = {
@@ -10,7 +12,7 @@ UNICODE_PIECES = {
 }
 
 class GitChessEngine:
-    """Manages chess board state, move validation, and FEN persistence."""
+    """Manages chess board state by replaying Git history, move validation, and FEN persistence."""
 
     def __init__(self, fen_path: Optional[Path] = None):
         self.fen_path = fen_path or get_board_fen_path()
@@ -18,14 +20,51 @@ class GitChessEngine:
         self.load_state()
 
     def load_state(self) -> chess.Board:
-        """Reads current FEN from file, defaulting to initial chess position if missing."""
+        """Reconstructs board state by replaying valid move commits from Git history."""
+        self.board = chess.Board()
+        
+        # Only replay git log if operating on main repo board.fen
+        if self.fen_path == get_board_fen_path():
+            try:
+                res = subprocess.run(
+                    ["git", "log", "--reverse", "--pretty=format:%s"],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if res.returncode == 0 and res.stdout.strip():
+                    lines = res.stdout.strip().splitlines()
+                    start_idx = 0
+                    for idx, line in enumerate(lines):
+                        clean_line = line.strip().lower()
+                        if "reset:" in clean_line or "reset gitchess" in clean_line:
+                            start_idx = idx + 1
+
+                    for line in lines[start_idx:]:
+                        clean = line.strip()
+                        if clean.lower().startswith("move:"):
+                            raw_move = clean[5:].strip()
+                            if "[" in raw_move:
+                                raw_move = raw_move.split("[")[0].strip()
+                            
+                            m = self.parse_move(raw_move)
+                            if m:
+                                self.board.push(m)
+                    return self.board
+            except Exception:
+                pass
+
+        # Fallback for isolated temporary fen_path or when git is unavailable
         if self.fen_path.exists():
             fen_str = self.fen_path.read_text().strip()
             if fen_str:
-                self.board = chess.Board(fen_str)
+                try:
+                    self.board = chess.Board(fen_str)
+                except ValueError:
+                    self.board = chess.Board()
         else:
-            self.board = chess.Board()
             self.save_state()
+
         return self.board
 
     def save_state(self) -> None:
@@ -38,20 +77,22 @@ class GitChessEngine:
         self.save_state()
 
     def parse_move(self, move_str: str) -> Optional[chess.Move]:
-        """Attempts to parse move_str as UCI first, then SAN."""
+        """Attempts to parse move_str as SAN first, then UCI, against current board."""
         clean_str = move_str.strip()
         
-        # Try UCI (e.g. e2e4, g1f3)
+        # Try Standard Algebraic Notation (e.g. e4, Nf3, O-O)
         try:
-            move = chess.Move.from_uci(clean_str)
-            if move in self.board.legal_moves:
-                return move
+            m = self.board.parse_san(clean_str)
+            if m in self.board.legal_moves:
+                return m
         except ValueError:
             pass
 
-        # Try Standard Algebraic Notation (e.g. e4, Nf3, O-O)
+        # Try UCI (e.g. e2e4, g1f3)
         try:
-            return self.board.parse_san(clean_str)
+            m = chess.Move.from_uci(clean_str)
+            if m in self.board.legal_moves:
+                return m
         except ValueError:
             pass
 
@@ -114,7 +155,6 @@ class GitChessEngine:
         svg_path = repo_root / "board.svg"
         readme_path = repo_root / "README.md"
 
-        # Generate SVG board
         from git_chess.visualization import generate_board_svg
         svg_content = generate_board_svg(self.board)
         svg_path.write_text(svg_content)
