@@ -6,6 +6,8 @@ from typing import Optional
 import click
 import chess
 from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
 from git_chess.engine import GitChessEngine
 from git_chess.utils import get_repo_root
 
