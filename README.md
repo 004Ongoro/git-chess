@@ -5,17 +5,21 @@ Welcome to **GitChess**, a chess game where every chess move is performed throug
 ## Current Game State
 
 <!-- BOARD_START -->
-```
-r n b q k b n r
-p p p p p p p p
-. . . . . . . .
-. . . . . . . .
-. . . . P . . .
-. . . . . . . .
-P P P P . P P P
-R N B Q K B N R
+![GitChess Board](board.svg)
 
-Black to move
+```
+  a b c d e f g h
+8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ 8
+7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟ 7
+6 · · · · · · · · 6
+5 · · · · ♙ · · · 5
+4 · · · · · · · · 4
+3 · · · · · · · · 3
+2 ♙ ♙ ♙ ♙ · ♙ ♙ ♙ 2
+1 ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖ 1
+  a b c d e f g h
+
+White to move
 ```
 <!-- BOARD_END -->
 
