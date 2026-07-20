@@ -1,8 +1,11 @@
 # GitChess ♟️ Git-Driven Chess Engine
 
 [![GitChess CI](https://github.com/004Ongoro/git-chess/actions/workflows/git-chess-ci.yml/badge.svg)](https://github.com/004Ongoro/git-chess/actions)
+[![Live Board](https://img.shields.io/badge/Live_Board-GitHub_Pages-brightgreen)](https://004Ongoro.github.io/git-chess/)
 
 **GitChess** is a complete, fully featured chess game where every chess move is performed directly through Git commits and operations. The Git repository **is** the game board and the full game history.
+
+🌐 **Live Web Viewer**: [004Ongoro.github.io/git-chess](https://004Ongoro.github.io/git-chess/)
 
 ---
 
